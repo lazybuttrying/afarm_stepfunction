@@ -1,0 +1,15 @@
+FROM amazonlinux
+RUN yum update && yum install -y gcc gcc-c++ git python3-devel mesa-libGL python3 which wget
+
+RUN pip3 install torch==1.10.2+cpu torchvision==0.11.3+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+RUN python3 -m pip install 'git+https://github.com/lazybuttrying/detectron2.git'
+
+WORKDIR home
+RUN git clone https://github.com/lazybuttrying/AdelaiDet.git adet
+WORKDIR adet
+RUN python3 setup.py build develop
+RUN wget -P ./training_dir/BoxInst_MS_R_50_1x/ https://modelfiles-bucket.s3.ap-northeast-2.amazonaws.com/model_final.pth
+RUN python3 -m  pip install --no-cache-dir --upgrade -r ./docker/requirements.txt
+
+#uvicorn app.main:app --host 0.0.0.0 -port 80
