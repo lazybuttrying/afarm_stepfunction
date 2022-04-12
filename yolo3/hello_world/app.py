@@ -11,9 +11,17 @@ import boto3
 
 root_path = "/tmp/"
 load_dotenv()
+hasura_key = os.environ.get("HASURA_KEY")
 s3_access_key = os.environ.get("S3_ACCESS_KEY")
 s3_secret_key = os.environ.get("S3_SECRET_ACCESS_KEY")
 bucket_name = os.environ.get("BUCKET_NAME")
+
+url = "https://better-rat-41.hasura.app/v1/graphql"
+payload_getid = "{\"query\":\"query MyQuery {\\n  afarm_grape_aggregate(where: {quality_id: {_eq: %s}}) {\\n    aggregate {\\n      max {\\n        grape_id\\n      }\\n    }\\n  }\\n}\\n\",\"variables\":{}}"
+headers = {
+    "Content-Type":"application/json",
+    "x-hasura-admin-secret": hasura_key
+}
 
 client_s3 = boto3.client( 's3',
         aws_access_key_id = s3_access_key,
@@ -59,10 +67,18 @@ def lambda_handler(event, context):
      '--skip_frame', str(skip_frame),
      '--save-txt', '--save-crop']
     test = subprocess.run(args, capture_output=True)
-    print(test)
+    print("Result: ", test.stdout)
+    print("Error: ", test.stderr)
     print(os.listdir('/tmp/inference/crops'))
-
     print(os.listdir('/tmp/inference/crops/'+str(quality_id)))
+
+    # get start poing of grape_id
+    response = request("POST", url, headers=headers, 
+                 data = payload_getid % (quality_id)).json()
+    grape_id = response["data"]["afarm_grape_aggregate"]["aggregate"]["max"]["grape_id"]
+    if grape_id is None:
+        grape_id = 0
+    print(grape_id, response)
 
     #result_csv = csv.reader(open(root_path+'inference/deepsort_result.csv', 'r'))
     #while (len(os.listdir(src_path)) > len(os.listdir(dest_path))):
@@ -79,9 +95,10 @@ def lambda_handler(event, context):
     return {
         "statusCode": 200,
         "quality_id": quality_id,
+        "grape_id": grape_id,
         "body": json.dumps(
             {
-               "quality_id" : quality_id
+               "quality_id" : quality_id,  
             }
         ),
     }

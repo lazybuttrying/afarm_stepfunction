@@ -27,7 +27,8 @@ sys.path.append("/var/task/box")
 def setup_cfg(args):
     # load config from file and command-line arguments
     cfg = get_cfg()
-    args.config_file = '/var/task/box/configs/BoxInst/MS_R_50_1x.yaml'
+    #args.config_file = '/var/task/box/configs/BoxInst/MS_R_50_1x.yaml'
+    args.config_file = '/var/task/box/training_dir/BoxInst_MS_R_50_1x_sick4/config.yaml'
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     # Set score_threshold for builtin models
@@ -81,6 +82,10 @@ def get_parser():
         help="the name of the report",
         default='68'
     )
+
+    parser.add_argument("--mask-path",help="root file to save mask results",
+        default='/tmp/regression_data/masks')
+
     return parser
 
 
@@ -103,6 +108,8 @@ if __name__ == "__main__":
     cfg = setup_cfg(args)
 
     demo = VisualizationDemo(cfg)
+    mask_path = args.mask_path
+    os.makedirs(mask_path, exist_ok=True)
     print(args.input)
 
     if args.input:
@@ -116,8 +123,11 @@ if __name__ == "__main__":
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
             start_time = time.time()
-            predictions, visualized_output, mask = demo.run_on_image(img)
-            # mask -> unit8 binary mask for every instances. 만약 class가 여러개라면 pred_claass도 같이 받아야함. 1 인 부분이 class
+            predictions, visualized_output, mask, pred_classes = \
+                    demo.run_on_image(img, path, mask_path)
+            
+            # mask -> unit8 binary mask for every instances. 
+            # 만약 class가 여러개라면 pred_claass도 같이 받아야함. 1 인 부분이 class
 
             img_path = path
             instance_num = len(predictions["instances"])
@@ -125,8 +135,10 @@ if __name__ == "__main__":
             if csv_true:
                 row.append(path)
                 row.append(instance_num)
-            #if mask_true:
-            #   row.append(mask.mask())
+            if mask_true:
+                row.append(mask)
+                row.append(pred_classes)
+
             logger.info(
                 "{}: detected {} instances in {:.2f}s".format(
                     path, len(predictions["instances"]), time.time() - start_time
@@ -141,6 +153,7 @@ if __name__ == "__main__":
                     assert len(args.input) == 1, "Please specify a directory with args.output"
                     out_filename = args.output
                 visualized_output.save(out_filename)
+                print(f"visualized output saved to {out_filename}")
                 if path_true:
                     row.append(out_filename)
             else:

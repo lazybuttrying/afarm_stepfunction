@@ -20,17 +20,14 @@ bucket_name = os.environ.get("BUCKET_NAME")
 
 url = "https://better-rat-41.hasura.app/v1/graphql"
 
-
-
 objs = "{quality_id: %s, grape_id: %s, berry: %s, sick_berry: %s, img: \\\"%s\\\"}," 
 payload_objs ="{\"query\":\"mutation MyMutation {\\n  insert_afarm_grape(objects: [%s]) {\\n    returning {\\n      grape_id\\n    }\\n  }\\n}\\n\",\"variables\":{}}"
-payload_getid = "{\"query\":\"query MyQuery {\\n  afarm_grape_aggregate(where: {quality_id: {_eq: %s}}) {\\n    aggregate {\\n      max {\\n        grape_id\\n      }\\n    }\\n  }\\n}\\n\",\"variables\":{}}"
 
 #payload="{\"query\":\"mutation MyMutation {\\n  insert_afarm_grape_one(object: {quality_id: %s, grape_id: %s, img: \\\"%s\\\", berry: %s}) {\\n    grape_id\\n  }\\n}\\n\",\"variables\":{}}"
 headers = {
-        "Content-Type":"application/json",
-        "x-hasura-admin-secret": hasura_key
-        }
+    "Content-Type":"application/json",
+    "x-hasura-admin-secret": hasura_key
+}
 
 
 client_s3 = boto3.client( 's3',
@@ -58,7 +55,8 @@ def upload_file(file, key):
 
 def lambda_handler(event, context):
     # mkdir image folders
-    quality_id = event["quality_id"] 
+    quality_id = event[0]["quality_id"]
+    grape_id = event[0]["grape_id"]
     src_path = root_path+'img/'+str(quality_id)+"/"
     dest_path = root_path+'viz/'+str(quality_id)+"/"
     os.makedirs(root_path+'viz/results/', exist_ok = True)
@@ -70,7 +68,7 @@ def lambda_handler(event, context):
     path = deque()
     for obj in bucket.objects.filter(Prefix=src_s3):
         if obj.key[-1] != "/":
-            fname = str(dt.now()).replace(" ","_")+obj.key.split("/")[-1]
+            fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
             bucket.download_file(obj.key, src_path+fname)
             path.append(fname)
             
@@ -83,31 +81,25 @@ def lambda_handler(event, context):
         "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]:
         args.append(x)
     test = subprocess.run(args, capture_output=True)
-    print(test)
+    print("Result: ", test.stdout)
+    print("Error: ", test.stderr)
 
-    # get start poing of grape_id
-    response = request("POST", url, headers=headers, 
-                 data = payload_getid % (quality_id)).json()
-    grape_id = response["data"]["afarm_grape_aggregate"]["aggregate"]["max"]["grape_id"]
-    if grape_id is None:
-        grape_id = 0
-    print(grape_id, response)
+
     # get result
     result_csv = csv.reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
-    
-    # check all images are saved
-    while (len(os.listdir(src_path)) > len(os.listdir(dest_path))):
-        pass # wait until all result image file created
-    
-
     result = {"data":{}}
     payload_grapes = ""
+    
+    # check all images are saved
+    # while (len(os.listdir(src_path)) > len(os.listdir(dest_path))):
+    #     pass # wait until all result image file created
     
     # upload result to s3 and prepare GraphQL payload
     while path:
         grape_id += 1
         p = path.popleft()
-        berry = int(next(result_csv)[1])
+        row = next(result_csv)
+        berry, mask, pred_classes = int(row[1]), row[2], row[3]
         payload_grapes += objs % (quality_id, grape_id, berry, 0, p)
         result["data"][p]=int(berry)
         upload_file(dest_path+p, p)
@@ -134,11 +126,12 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "quality_ud": quality_id,
+        "quality_id": quality_id,
+        "grape_id": grape_id,
         "body": json.dumps(
                 result
                 )                
-            }
+    }
 
 
 if __name__ == "__main__":
