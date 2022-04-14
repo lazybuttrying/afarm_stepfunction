@@ -6,6 +6,7 @@ import bisect
 import multiprocessing as mp
 from collections import deque
 import cv2
+
 import torch
 import matplotlib.pyplot as plt
 import detectron2.data.transforms as T

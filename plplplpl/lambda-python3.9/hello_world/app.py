@@ -9,6 +9,15 @@ import subprocess
 import os
 import shutil
 import boto3
+import logging
+
+logging.basicConfig(
+    format='%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s', 
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
 
 root_path = "/tmp/"
 load_dotenv()
@@ -41,16 +50,12 @@ resource_s3 = boto3.resource( 's3',
 
 bucket = resource_s3.Bucket(bucket_name)
 
-def prefix_exits(bucket, path):
-    res = client_s3.list_objects_v2(Bucket=bucket, Prefix=path, MaxKeys=1)
-    return 'Contents' in res
-
 
 def upload_file(file, key):
     try:
         client_s3.upload_file(file, bucket_name, "public/result/"+key)
     except Exception as e:
-        print(f"Another Error => {e}")
+        logger.error(f"Another Error => {e}")
 
 
 def lambda_handler(event, context):
@@ -59,9 +64,12 @@ def lambda_handler(event, context):
     grape_id = event[0]["grape_id"]
     src_path = root_path+'img/'+str(quality_id)+"/"
     dest_path = root_path+'viz/'+str(quality_id)+"/"
+    mask_path = root_path+'regression_data/masks/'+str(quality_id)+"/"
+    
     os.makedirs(root_path+'viz/results/', exist_ok = True)
     os.makedirs(src_path, exist_ok = True)
     os.makedirs(dest_path, exist_ok = True)
+    os.makedirs(mask_path, exist_ok = True)
 
     # download images
     src_s3 = "grape_before/"+str(quality_id)+"/"
@@ -69,20 +77,29 @@ def lambda_handler(event, context):
     for obj in bucket.objects.filter(Prefix=src_s3):
         if obj.key[-1] != "/":
             fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
-            bucket.download_file(obj.key, src_path+fname)
+            #bucket.download_file(obj.key, src_path+fname)
             path.append(fname)
             
-    args = ['python3.9', "/var/task/box/demo/demo.py", "--input"]
-    for p in list(map(lambda x:src_path+x, list(path))):
-        args.append(p)
-    for x in [ "--code", str(quality_id), 
-            "--output", dest_path,
+    args = ['python3.9', "/var/task/box/demo/demo.py", 
+        "--code", str(quality_id), 
+        "--input", src_path,
+        "--output", dest_path,
+        "--mask-path", mask_path,
         "--opts", "MODEL.DEVICE", "cpu",
-        "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]:
-        args.append(x)
+            "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]
+       
+    # args = ['python3.9', "/var/task/box/demo/demo.py", "--input"]
+    # # for p in list(map(lambda x:src_path+x, list(path))):
+    # #     args.append(p)
+    # for x in [ "--code", str(quality_id), 
+    #         "--output", dest_path,
+    #         "--mask-path", mask_path,
+    #     "--opts", "MODEL.DEVICE", "cpu",
+    #     "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]:
+    #     args.append(x)
     test = subprocess.run(args, capture_output=True)
-    print("Result: ", test.stdout)
-    print("Error: ", test.stderr)
+    logger.info(f"Result: {test.stdout}")
+    logger.error(f"Error: {test.stderr}",)
 
 
     # get result
@@ -107,22 +124,8 @@ def lambda_handler(event, context):
      # save all the data
     response = request("POST", url, headers=headers, 
                  data = payload_objs % (payload_grapes)).json()
-    print(response) 
-# #     uvicorn.run(app, host="0.0.0.0", port=5000)
-    # for p in path:
-    #     grape_id += 1
-    #     berry = int(next(result_csv)[1]) 
-    #     response = request("POST", url, headers=headers, 
-    #             data = payload % (quality_id, grape_id, p, berry)).json()
-    #     print(response)
-    #     while "errors" in response:
-    #         grape_id += 1
-    #         response = request("POST", url, headers=headers, 
-    #             data = payload % (quality_id, grape_id, p, berry)).json()
-    #         print(response)    
-    #     result["data"][p]=int(berry)
-    #shutil.rmtree(src_path)
-    #shutil.rmtree(dest_path)
+    logger.info(f"Response of hasura : {response}") 
+
 
     return {
         "statusCode": 200,
@@ -135,5 +138,5 @@ def lambda_handler(event, context):
 
 
 if __name__ == "__main__":
-    x = lambda_handler({"quality_id":90},1)
+    x = lambda_handler([{"quality_id":90, "grape_id":100}],1)
     print(x)

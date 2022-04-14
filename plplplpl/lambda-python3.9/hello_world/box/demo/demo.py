@@ -12,6 +12,9 @@ import tqdm
 import csv
 import configparser
 
+import logging
+logger = logging.getLogger(__name__)
+
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
@@ -95,10 +98,10 @@ if __name__ == "__main__":
     csv_cfg = configparser.ConfigParser()  ## 클래스 객체 생성
     csv_cfg.read(args.output_csv_config)
     # args.output = './viz/'
-    print(os.listdir('./'))
+    # print(os.listdir('./'))
     csv_output_folder = f'/tmp/viz/results/{args.code}.csv'
     #csv_output_folder = csv_cfg.get("DEFAULT","OUTPUT_FOLDER")
-    logger = setup_logger()
+    # logger = setup_logger()
     logger.info("Arguments: " + str(args))
     f = open(csv_output_folder,'w', newline='')
     wr = csv.writer(f)
@@ -109,63 +112,62 @@ if __name__ == "__main__":
 
     demo = VisualizationDemo(cfg)
     mask_path = args.mask_path
-    os.makedirs(mask_path, exist_ok=True)
-    print(args.input)
+    #os.makedirs(mask_path, exist_ok=True)
+    # print(args.input)
 
-    if args.input:
-        if os.path.isdir(args.input[0]):
-            args.input = [os.path.join(args.input[0], fname) for fname in os.listdir(args.input[0])]
-        elif len(args.input) == 1:
-            args.input = glob.glob(os.path.expanduser(args.input[0]))
-            assert args.input, "The input path(s) was not found"
-            
-        for path in tqdm.tqdm(args.input, disable=not args.output):
-            # use PIL, to be consistent with evaluation
-            img = read_image(path, format="BGR")
-            start_time = time.time()
-            predictions, visualized_output, mask, pred_classes = \
-                    demo.run_on_image(img, path, mask_path)
-            
-            # mask -> unit8 binary mask for every instances. 
-            # 만약 class가 여러개라면 pred_claass도 같이 받아야함. 1 인 부분이 class
+    if os.path.isdir(args.input[0]):
+        args.input = [os.path.join(args.input[0], fname) for fname in os.listdir(args.input[0])]
+    elif len(args.input) == 1:
+        args.input = glob.glob(os.path.expanduser(args.input[0]))
+        assert args.input, "The input path(s) was not found"
+        
+    for path in tqdm.tqdm(args.input, disable=not args.output):
+        # use PIL, to be consistent with evaluation
+        img = read_image(path, format="BGR")
+        start_time = time.time()
+        predictions, visualized_output, mask, pred_classes = \
+                demo.run_on_image(img, path, mask_path)
+        
+        # mask -> unit8 binary mask for every instances. 
+        # 만약 class가 여러개라면 pred_claass도 같이 받아야함. 1 인 부분이 class
 
-            img_path = path
-            instance_num = len(predictions["instances"])
-            row = []
-            if csv_true:
-                row.append(path)
-                row.append(instance_num)
-            if mask_true:
-                row.append(mask)
-                row.append(pred_classes)
+        img_path = path
+        instance_num = len(predictions["instances"])
+        row = []
+        if csv_true:
+            row.append(path)
+            row.append(instance_num)
+        if mask_true:
+            row.append(mask)
+            row.append(pred_classes)
 
-            logger.info(
-                "{}: detected {} instances in {:.2f}s".format(
-                    path, len(predictions["instances"]), time.time() - start_time
-                )
-            )
-
-            if args.output:
-                if os.path.isdir(args.output):
-                    assert os.path.isdir(args.output), args.output
-                    out_filename = os.path.join(args.output, os.path.basename(path))
-                else:
-                    assert len(args.input) == 1, "Please specify a directory with args.output"
-                    out_filename = args.output
-                visualized_output.save(out_filename)
-                print(f"visualized output saved to {out_filename}")
-                if path_true:
-                    row.append(out_filename)
-            else:
-                cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
-                if cv2.waitKey(0) == 27:
-                    break  # esc to quit
-            wr.writerow(row)
-        f.close()
         logger.info(
-                "report saved to {}".format(
-                    csv_output_folder
-                )
+            "{}: detected {} instances in {:.2f}s".format(
+                path, len(predictions["instances"]), time.time() - start_time
             )
-            
+        )
+
+        if args.output:
+            if os.path.isdir(args.output):
+                assert os.path.isdir(args.output), args.output
+                out_filename = os.path.join(args.output, os.path.basename(path))
+            else:
+                assert len(args.input) == 1, "Please specify a directory with args.output"
+                out_filename = args.output
+            visualized_output.save(out_filename)
+            logger.info(f"visualized output saved to {out_filename}")
+            if path_true:
+                row.append(out_filename)
+        else:
+            cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
+            if cv2.waitKey(0) == 27:
+                break  # esc to quit
+        wr.writerow(row)
+    f.close()
+    logger.info(
+            "report saved to {}".format(
+                csv_output_folder
+            )
+        )
+        
 

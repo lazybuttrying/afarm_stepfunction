@@ -1,5 +1,10 @@
 # afram_stepfunction
 
+# Error
+Error: b'Skip loading parameter \'proposal_generator.fcos_head.cls_logits.weight\' to the model due to incompatible shapes: (1, 256, 3, 3) in the checkpoint but (2, 256, 3, 3) in the model! You might want to double check if this is expected.\nSkip loading parameter \'proposal_generator.fcos_head.cls_logits.bias\' to the model due to incompatible shapes: (1,) in the checkpoint but (2,) in the model! You might want to double check if this is expected.\nSome model parameters or buffers are not found in the checkpoint:\n\x1b[34mproposal_generator.fcos_head.cls_logits.{bias, weight}\x1b[0m\n\r  0%|          | 0/220 [00:00<?, ?it/s]/var/lang/lib/python3.9/site-packages/torch/functional.py:445: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at  ../aten/src/ATen/native/TensorShape.cpp:2157.)\n  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]\n\r  0%|          | 0/220 [00:01<?, ?it/s]\nTraceback (most recent call last):\n  File "/var/task/box/demo/demo.py", line 129, in <module>\n    demo.run_on_image(img, path, mask_path)\n  File "/var/task/box/demo/predictor.py", line 91, in run_on_image\n    for i in range(len(mask)):\nTypeError: object of type \'NoneType\' has no len()\n'
+
+
+----------
 # 1. BoxInst
 
 ### Inference
