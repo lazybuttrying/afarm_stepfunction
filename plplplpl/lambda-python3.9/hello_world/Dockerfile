@@ -3,7 +3,7 @@ FROM public.ecr.aws/lambda/python:3.9
 
 RUN yum update -y && yum install -y gcc gcc-c++ mesa-libGL which wget git tar
 
-COPY .env app.py requirements.txt ./
+COPY .env app.py requirements.txt ./upload ./
 RUN python3.9 -m pip install -r requirements.txt 
 
 RUN python3.9 -m pip install 'git+https://github.com/lazybuttrying/detectron2.git'

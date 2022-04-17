@@ -1,13 +1,11 @@
 import json
 from datetime import datetime as dt
-import csv
+from csv import reader
 from dotenv import load_dotenv
 from requests import request
-import shutil
-import subprocess
+from subprocess import Popen, run
 import os
-import shutil
-import boto3
+from boto3 import client, resource
 import logging
 
 logging.basicConfig(
@@ -38,11 +36,11 @@ headers = {
 }
 
 
-client_s3 = boto3.client( 's3',
+client_s3 = client( 's3',
         aws_access_key_id = s3_access_key,
         aws_secret_access_key = s3_secret_key
 )
-resource_s3 = boto3.resource( 's3', 
+resource_s3 = resource( 's3', 
     aws_access_key_id=s3_access_key,
     aws_secret_access_key=s3_secret_key
 )
@@ -75,7 +73,7 @@ def lambda_handler(event, context):
     for obj in bucket.objects.filter(Prefix=src_s3):
         if obj.key[-1] != "/":
             fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
-            #bucket.download_file(obj.key, src_path+fname)
+            bucket.download_file(obj.key, src_path+fname)
     
             
     args = ['python3.9', "/var/task/box/demo/demo.py", 
@@ -86,27 +84,32 @@ def lambda_handler(event, context):
         "--opts", "MODEL.DEVICE", "cpu",
             "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x_sick4/model_0059999.pth"]
        
-    test = subprocess.run(args, capture_output=True)
+    test = run(args, capture_output=True)
     logger.info(f"Result: {test.stdout}")
     logger.error(f"Error: {test.stderr}",)
 
 
     # get result
-    result_csv = csv.reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
+    result_csv = reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
+    
+    Popen(["python3.9", "upload_images.py", "--path", dest_path])
+    Popen(["python3.9", "upload_masks.py", "--path", mask_path,
+        "--zip_name", str(quality_id)])
+
+    # upload result to s3 and prepare GraphQL payload
     result = {"data":{}}
     payload_grapes = ""
-    
-    
-    # upload result to s3 and prepare GraphQL payload
-    path = os.listdir(dest_path)
-    while path:
+    for p in os.listdir(dest_path):
         grape_id += 1
-        p = path.pop()
         row = next(result_csv)
-        berry, mask, pred_classes = int(row[1]), row[2], row[3]
-        payload_grapes += objs % (quality_id, grape_id, berry, 0, p)
+        # tensor([0, 0, 0])"
+        pred_classes = row[3][8:-2].split(",")
+        sick_berry = pred_classes.count("1")
+        berry = len(pred_classes) - sick_berry
+        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry, p)
         result["data"][p]=int(berry)
-        upload_file(dest_path+p, p)
+        #upload_file(dest_path+p, p)
+
 
      # save all the data
     response = request("POST", url, headers=headers, 
@@ -120,7 +123,7 @@ def lambda_handler(event, context):
         "grape_id": grape_id,
         "body": json.dumps(
                 result
-                )                
+        )                
     }
 
 
