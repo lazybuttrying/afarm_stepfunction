@@ -1,6 +1,5 @@
 import json
 from datetime import datetime as dt
-from collections import deque
 import csv
 from dotenv import load_dotenv
 from requests import request
@@ -73,12 +72,11 @@ def lambda_handler(event, context):
 
     # download images
     src_s3 = "grape_before/"+str(quality_id)+"/"
-    path = deque()
     for obj in bucket.objects.filter(Prefix=src_s3):
         if obj.key[-1] != "/":
             fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
             #bucket.download_file(obj.key, src_path+fname)
-            path.append(fname)
+    
             
     args = ['python3.9', "/var/task/box/demo/demo.py", 
         "--code", str(quality_id), 
@@ -86,17 +84,8 @@ def lambda_handler(event, context):
         "--output", dest_path,
         "--mask-path", mask_path,
         "--opts", "MODEL.DEVICE", "cpu",
-            "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]
+            "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x_sick4/model_0059999.pth"]
        
-    # args = ['python3.9', "/var/task/box/demo/demo.py", "--input"]
-    # # for p in list(map(lambda x:src_path+x, list(path))):
-    # #     args.append(p)
-    # for x in [ "--code", str(quality_id), 
-    #         "--output", dest_path,
-    #         "--mask-path", mask_path,
-    #     "--opts", "MODEL.DEVICE", "cpu",
-    #     "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x/model_final.pth"]:
-    #     args.append(x)
     test = subprocess.run(args, capture_output=True)
     logger.info(f"Result: {test.stdout}")
     logger.error(f"Error: {test.stderr}",)
@@ -107,14 +96,12 @@ def lambda_handler(event, context):
     result = {"data":{}}
     payload_grapes = ""
     
-    # check all images are saved
-    # while (len(os.listdir(src_path)) > len(os.listdir(dest_path))):
-    #     pass # wait until all result image file created
     
     # upload result to s3 and prepare GraphQL payload
+    path = os.listdir(dest_path)
     while path:
         grape_id += 1
-        p = path.popleft()
+        p = path.pop()
         row = next(result_csv)
         berry, mask, pred_classes = int(row[1]), row[2], row[3]
         payload_grapes += objs % (quality_id, grape_id, berry, 0, p)

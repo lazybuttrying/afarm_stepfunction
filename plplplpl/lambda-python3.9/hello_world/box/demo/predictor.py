@@ -1,16 +1,18 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import numpy as np
+import json
 import imageio
 import atexit
 import bisect
+import os
 import multiprocessing as mp
 from collections import deque
 import cv2
-
 import torch
 import matplotlib.pyplot as plt
 import detectron2.data.transforms as T
 import pickle
+import pycocotools.mask as maskutil
 
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.modeling import build_model
@@ -18,11 +20,9 @@ from detectron2.data import MetadataCatalog
 # from detectron2.engine.defaults import DefaultPredictor
 from detectron2.utils.video_visualizer import VideoVisualizer
 from detectron2.utils.visualizer import ColorMode, Visualizer
+from detectron2.utils.logger import setup_logger
 
-import pycocotools.mask as maskutil
-
-import sys
-sys.path.append("/var/task/box/")
+# 이 위에 코드 살펴봐야 result어떻게 활용하ㄴ지 알수 있을듯
 from adet.utils.visualizer import TextVisualizer
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
@@ -60,10 +60,12 @@ class VisualizationDemo(object):
             predictions (dict): the output of the model.
             vis_output (VisImage): the visualized image output.
         """
+        os.makedirs(mask_path,exist_ok = True)
         image_name = image_path.split('/')[-1].split('.')[0]
         vis_output = None
 
         predictions = self.predictor(image)
+    
         
         # Convert image from OpenCV BGR format to Matplotlib RGB format.
         image = image[:, :, ::-1]
@@ -72,33 +74,20 @@ class VisualizationDemo(object):
         else:
             visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
 
-        if "bases" in predictions:
-            self.vis_bases(predictions["bases"])
-        if "panoptic_seg" in predictions:
-            panoptic_seg, segments_info = predictions["panoptic_seg"]
-            vis_output = visualizer.draw_panoptic_seg_predictions(
-                panoptic_seg.to(self.cpu_device), segments_info
-            )
-        else:
-            if "sem_seg" in predictions:
-                vis_output = visualizer.draw_sem_seg(
-                    predictions["sem_seg"].argmax(dim=0).to(self.cpu_device))
-
-            if "instances" in predictions: #############
-                instances = predictions["instances"].to(self.cpu_device)
-                vis_output, mask = visualizer.draw_instance_predictions(predictions=instances)
-                pred_classes = instances.pred_classes
-                masks = []
-                for i in range(len(mask)):
-                    masks.append(mask[i].mask)
-                mask_n_class = [masks, torch.count_nonzero(pred_classes).item()]
-                print(len(masks))
-
-                # https://github.com/facebookresearch/detectron2/blob/cbbc1ce26473cb2a5cc8f58e8ada9ae14cb41052/detectron2/utils/visualizer.py#L595
-                # https://github.com/facebookresearch/detectron2/blob/cbbc1ce26473cb2a5cc8f58e8ada9ae14cb41052/detectron2/utils/visualizer.py#L59
-        with open(f"{mask_path}/{image_name}_masks.pkl","wb") as f:
-            pickle.dump(mask_n_class, f)
-
+        instances = predictions["instances"].to(self.cpu_device)
+        pred_classes = instances.pred_classes
+        vis_output, mask = visualizer.draw_instance_predictions(predictions=instances)
+    
+        # No grape berry, pass it
+        if mask == None:
+            return False
+ 
+        masks = [mask[i].mask for i in range(len(mask))]
+        mask_n_class = [masks, torch.count_nonzero(pred_classes).item()]
+            # print(mask_n_class[1])
+        
+        with open(f"{mask_path}{image_name}_masks.pkl","wb") as f: ##############경로 맞게 바꿔야함
+            pickle.dump(mask_n_class,f)
         return predictions, vis_output, mask, pred_classes
 
     def _frame_from_video(self, video):

@@ -3,8 +3,6 @@ output
 instant_test_output
 inference_test_output
 
-*.pth
-*.DS_Store
 
 *.jpg
 *.png
@@ -20,7 +18,7 @@ build/
 dist/
 
 # pytorch/python/numpy formats
-# *.pth
+*.pth
 *.pkl
 *.npy
 
@@ -40,6 +38,8 @@ dist/
 .python-version
 
 # project dirs
+/viz
+/wandb
 /datasets/coco
 /datasets/lvis
 /datasets/pic
@@ -49,6 +49,7 @@ dist/
 /example_inputs
 /debug
 /weights
+/training_dir
 /export
 eval.sh
 
