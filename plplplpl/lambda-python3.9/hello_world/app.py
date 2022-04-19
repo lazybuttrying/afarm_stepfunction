@@ -3,7 +3,7 @@ from datetime import datetime as dt
 from csv import reader
 from dotenv import load_dotenv
 from requests import request
-from subprocess import Popen, run
+from subprocess import Popen, run, PIPE
 import os
 from boto3 import client, resource
 import logging
@@ -13,8 +13,6 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO
 )
-
-logger = logging.getLogger(__name__)
 
 root_path = "/tmp/"
 load_dotenv()
@@ -56,6 +54,7 @@ def upload_file(file, key):
 
 
 def lambda_handler(event, context):
+    logger = logging.getLogger(__name__)
     # mkdir image folders
     quality_id = event[0]["quality_id"]
     grape_id = event[0]["grape_id"]
@@ -68,12 +67,12 @@ def lambda_handler(event, context):
     os.makedirs(dest_path, exist_ok = True)
     os.makedirs(mask_path, exist_ok = True)
 
-    # download images
-    src_s3 = "grape_before/"+str(quality_id)+"/"
-    for obj in bucket.objects.filter(Prefix=src_s3):
-        if obj.key[-1] != "/":
-            fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
-            bucket.download_file(obj.key, src_path+fname)
+    # # download images
+    # src_s3 = "grape_before/"+str(quality_id)+"/"
+    # for obj in bucket.objects.filter(Prefix=src_s3):
+    #     if obj.key[-1] != "/":
+    #         fname = str(dt.now()).replace(" ", "_")+obj.key.split("/")[-1]
+    #         bucket.download_file(obj.key, src_path+fname)
     
             
     args = ['python3.9', "/var/task/box/demo/demo.py", 
@@ -84,7 +83,7 @@ def lambda_handler(event, context):
         "--opts", "MODEL.DEVICE", "cpu",
             "MODEL.WEIGHTS", "/var/task/box/training_dir/BoxInst_MS_R_50_1x_sick4/model_0059999.pth"]
        
-    test = run(args, capture_output=True)
+    test = run(args, stdout=PIPE) #, capture_output=True)
     logger.info(f"Result: {test.stdout}")
     logger.error(f"Error: {test.stderr}",)
 
@@ -92,41 +91,36 @@ def lambda_handler(event, context):
     # get result
     result_csv = reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
     
-    Popen(["python3.9", "upload_images.py", "--path", dest_path])
-    Popen(["python3.9", "upload_masks.py", "--path", mask_path,
-        "--zip_name", str(quality_id)])
+    #Popen(["python3.9", "upload_images.py", "--path", dest_path])
+    # Popen(["python3.9", "upload_masks.py", "--path", mask_path,
+    #     "--zip_name", str(quality_id)],
+    #        stdout=PIPE)
 
     # upload result to s3 and prepare GraphQL payload
     result = {"data":{}}
     payload_grapes = ""
-    for p in os.listdir(dest_path):
+
+    for row in result_csv:
         grape_id += 1
-        row = next(result_csv)
-        # tensor([0, 0, 0])"
-        pred_classes = row[3][8:-2].split(",")
+        # tensor([0, 0, 0])
+        pred_classes = row[-2][8:-2].split(", ")
         sick_berry = pred_classes.count("1")
         berry = len(pred_classes) - sick_berry
-        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry, p)
-        result["data"][p]=int(berry)
-        #upload_file(dest_path+p, p)
-
+        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry, row[-1].split('/')[-1] )
 
      # save all the data
-    response = request("POST", url, headers=headers, 
-                 data = payload_objs % (payload_grapes)).json()
-    logger.info(f"Response of hasura : {response}") 
+    # response = request("POST", url, headers=headers, 
+    #              data = payload_objs % (payload_grapes)).json()
+    # logger.info(f"Response of hasura : {response}") 
 
 
     return {
         "statusCode": 200,
         "quality_id": quality_id,
         "grape_id": grape_id,
-        "body": json.dumps(
-                result
-        )                
     }
 
 
 if __name__ == "__main__":
-    x = lambda_handler([{"quality_id":90, "grape_id":100}],1)
+    x = lambda_handler([{"quality_id":90, "grape_id":500}],1)
     print(x)

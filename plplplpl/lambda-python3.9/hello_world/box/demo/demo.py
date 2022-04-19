@@ -14,9 +14,11 @@ import cv2
 import tqdm
 import csv
 import configparser
+from subprocess import Popen, PIPE
 
 from detectron2.data.detection_utils import read_image
-from detectron2.utils.logger import setup_logger
+# from detectron2.utils.logger import setup_logger
+from logging import getLogger
 
 from predictor import VisualizationDemo
 from adet.config import get_cfg
@@ -92,14 +94,15 @@ if __name__ == "__main__":
     csv_cfg.read('/var/task/tmp/config_csv.yaml')
     # args.output = './viz'
     csv_output_folder = f'/tmp/viz/results/{args.code}.csv'
-    logger = setup_logger()
+    #logger = setup_logger()
+
+    logger = getLogger(__name__)
     logger.info("Arguments: " + str(args))
-    csv_true = False
     f = open(csv_output_folder,'w', newline='')
     wr = csv.writer(f)
-    csv_true = True
-    mask_true = True
-    path_true = True
+    # csv_true = True
+    # mask_true = True
+    # path_true = True
     cfg = setup_cfg(args)
 
     demo = VisualizationDemo(cfg)
@@ -122,14 +125,16 @@ if __name__ == "__main__":
         # mask -> unit8 binary mask for every instances. 만약 class가 여러개라면 pred_claass도 같이 받아야함. 1 인 부분이 class
 
         img_path = path
+        file_name = os.path.basename(path)
         instance_num = len(predictions["instances"])
         row = []
-        if csv_true:
-            row.append(path)
-            row.append(instance_num)
-        if mask_true:
-            row.append(mask)
-            row.append(pred_classes)
+        #if csv_true:
+            #row.append(path)
+        row.append(file_name)
+        row.append(instance_num)
+        #if mask_true:
+            #row.append(mask)
+        row.append(pred_classes)
             
         logger.info(
             "{}: detected {} instances in {:.2f}s".format(
@@ -138,11 +143,17 @@ if __name__ == "__main__":
         )
 
         assert os.path.isdir(args.output), args.output
-        out_filename = os.path.join(args.output, os.path.basename(path))
+        out_filename = os.path.join(args.output, file_name)
         visualized_output.save(out_filename)
-        print(f"visualized output saved to {out_filename}")
-        if path_true:
-            row.append(out_filename)
+        #print(f"visualized output saved to {out_filename}")
+        Popen(["python3.9", "upload_image.py", 
+            "--path", out_filename, 
+            "--file_name", file_name ],
+            stdout=PIPE)
+
+        #if path_true:
+
+        row.append(out_filename)
         wr.writerow(row)
     f.close()
     logger.info(

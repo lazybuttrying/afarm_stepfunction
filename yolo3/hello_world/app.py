@@ -1,12 +1,8 @@
 import json
-from datetime import datetime as dt
-import csv
 from requests import request
 from dotenv import load_dotenv
-import shutil
-import subprocess
+from subprocess import run
 import os
-import shutil
 import boto3
 
 root_path = "/tmp/"
@@ -66,7 +62,8 @@ def lambda_handler(event, context):
      '--quality_id', str(quality_id),
      '--skip_frame', str(skip_frame),
      '--save-txt', '--save-crop']
-    test = subprocess.run(args, capture_output=True)
+     
+    test = run(args, capture_output=True)
     print("Result: ", test.stdout)
     print("Error: ", test.stderr)
     print(os.listdir('/tmp/inference/crops'))
@@ -79,14 +76,6 @@ def lambda_handler(event, context):
     if grape_id is None:
         grape_id = 0
     print(grape_id, response)
-
-    #result_csv = csv.reader(open(root_path+'inference/deepsort_result.csv', 'r'))
-    #while (len(os.listdir(src_path)) > len(os.listdir(dest_path))):
-    #    pass # wait until all result file c
-    
-    # for row in result_csv:
-    #     if (row[0] == 'frame'):
-    #         continue
 
     for f in os.listdir(root_path+'inference/crops/'+str(quality_id)+'/'):
         upload_file(root_path+'inference/crops/'+str(quality_id)+'/'+f, 'grape_before/'+str(quality_id)+'/'+f)

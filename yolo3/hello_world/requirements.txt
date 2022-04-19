@@ -31,3 +31,6 @@ tensorboard>=2.4.1
 
 # S3 -----
 boto3
+
+# env ----
+python-dotenv
