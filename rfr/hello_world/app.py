@@ -99,9 +99,9 @@ def lambda_handler(event, context):
     #       stdout=PIPE)
 
     csv_name = str(quality_id)+".csv"
-    client_s3.upload_file(args.path+csv_name, bucket_name, "mask/"+csv_name)
+    client_s3.upload_file("/tmp/viz/results/"+csv_name, bucket_name, "csv/"+csv_name)
     
-    return { event }
+    return event
 
 if __name__ == "__main__":
     x = lambda_handler(

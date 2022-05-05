@@ -12,10 +12,11 @@ import numpy as np
 # run on mask -> pkl로 저장, csv로 저장 둘다 넘겨주기
 
 class Contours():
-    def __init__(self, dest_path):
-        self.df = pd.DataFrame(columns = ["image","number of instances","sunburn_ratio","diameter","circularity","density","aspect ratio","grade"])
-        self.df.to_csv(dest_path, index = False)
     def __init__(self,pkl_path, image_path, dest_path=None, df_path=None):
+        if df_path == None : 
+            self.df = pd.DataFrame(columns = ["image","number of instances","sunburn_ratio","diameter","circularity","density","aspect ratio","grade"])
+            self.df.to_csv(dest_path, index = False)
+            return
         self.df = pd.read_csv(df_path)
         self.df = self.df.drop([self.df.columns[0], self.df.columns[1]], axis=1).values
         

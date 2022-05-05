@@ -35,7 +35,7 @@ def inference(regressor_path, csv_path, dest_path, image_path, mask_path):
         image_path = glob(os.path.expanduser(image_path))
         assert args.input, "The input path(s) was not found"
     
-    features = Contours(dest_path=dest_path)
+    features = Contours("","",dest_path=dest_path)
     for i in image_path:
         mask_name = i.split('/')[-1]+'_masks.pkl'
         features = Contours(f"{mask_path}{mask_name}", i, dest_path, csv_path)

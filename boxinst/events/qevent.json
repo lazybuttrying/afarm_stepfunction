@@ -1,6 +1,12 @@
 [
     {
-        "quality_id": 90,
-        "grape_id": 1200
+      "statusCode": 200,
+      "quality_id": 90,
+      "grape_id": 1652,
+      "body": "{\"quality_id\": 90}"
+    },
+    {
+      "statusCode": 200,
+      "log": "{\"msg\": \"empty\"}"
     }
-]
+  ]
