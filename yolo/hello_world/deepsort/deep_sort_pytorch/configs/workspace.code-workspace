@@ -1,0 +1,226 @@
+{
+	"folders": [
+		{
+			"name": "plplplpl",
+			"path": "../../../../../../plplplpl"
+		},
+		{
+			"name": "yoloLambda",
+			"path": "../../../../.."
+		}
+	],
+	"launch": {
+		"configurations": [
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "yolo-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "/Users/uhyeon/Documents/yoloLambda/yolo-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API yolo-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "/Users/uhyeon/Documents/yoloLambda/yolo-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "lambda-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "/Users/uhyeon/Documents/basictest/lambda-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API lambda-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "/Users/uhyeon/Documents/basictest/lambda-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "lambda-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "lambda-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API lambda-python3.9:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "lambda-python3.9/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.9"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "lambda-python3.7:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "lambda-python3.7/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.7"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API lambda-python3.7:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "lambda-python3.7/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.7"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "lambda-python3.8:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "lambda-python3.8/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.8"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API lambda-python3.8:HelloWorldFunction",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "lambda-python3.8/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.8"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "lambda-python3.7:HelloWorldFunction (python3.7)",
+				"invokeTarget": {
+					"target": "template",
+					"templatePath": "${workspaceFolder}/lambda-python3.7/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"lambda": {
+					"payload": {},
+					"environmentVariables": {},
+					"runtime": "python3.7"
+				}
+			},
+			{
+				"type": "aws-sam",
+				"request": "direct-invoke",
+				"name": "API lambda-python3.7:HelloWorldFunction (python3.7)",
+				"invokeTarget": {
+					"target": "api",
+					"templatePath": "${workspaceFolder}/lambda-python3.7/template.yaml",
+					"logicalId": "HelloWorldFunction"
+				},
+				"api": {
+					"path": "/hello",
+					"httpMethod": "get",
+					"payload": {
+						"json": {}
+					}
+				},
+				"lambda": {
+					"runtime": "python3.7"
+				}
+			}
+		]
+	}
+}
