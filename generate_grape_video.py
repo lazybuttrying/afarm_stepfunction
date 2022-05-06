@@ -13,6 +13,7 @@ fps = 1
 # 모든 사진의 이름이 해당 규칙을 만족해야함 (* 안 먹힘)
 src = folder+"%d.jpeg"
 dest = "result.mp4"
+# brew install ffmpeg
 #ffmpeg는 리눅스 용으로 이를 파이썬으로 실행시키는 구조
 subprocess.run(["ffmpeg", "-f", "image2",
     "-r", str(fps),
