@@ -90,11 +90,11 @@ def lambda_handler(event, context):
     start_grape_id = grape_id+1
     for row in result_csv:
         grape_id += 1
-        # tensor([0, 0, 0])
-        pred_classes = row[-2][8:-2].split(", ")
+        img = row[1].split('/')[-1]
+        pred_classes = row[2][8:-2].split(", ")  # tensor([0, 0, 0])
         sick_berry = pred_classes.count("1")
         berry = len(pred_classes) - sick_berry
-        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry, row[-1].split('/')[-1] )
+        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry,img)
 
      # save all the data
     response = request("POST", url, headers=headers, 

@@ -68,7 +68,7 @@ def lambda_handler(event, context):
     bucket.download_file("mask/"+str(quality_id)+".csv", csv_path)
     
     # download masks
-    Popen(["python3.9", "./download/download_masks.py", 
+    run(["python3.9", "./download/download_masks.py", 
         "--mask_path", mask_path,
         "--quality_id", str(quality_id)],
            stdout=PIPE)
@@ -77,7 +77,7 @@ def lambda_handler(event, context):
     src_s3 = "grape_before/"+str(quality_id)+"/"
     result_csv = reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
     for row in result_csv:
-        fname = row[0]
+        fname = row[0][26:]
         bucket.download_file(src_s3+fname, src_path+fname) 
 
 

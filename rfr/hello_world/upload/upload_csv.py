@@ -2,6 +2,9 @@ import os
 from boto3 import client
 from argparse import ArgumentParser 
 from logging import getLogger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 s3_access_key = os.environ.get("S3_ACCESS_KEY")
 s3_secret_key = os.environ.get("S3_SECRET_ACCESS_KEY")

@@ -18,7 +18,7 @@ class Contours():
             self.df.to_csv(dest_path, index = False)
             return
         self.df = pd.read_csv(df_path)
-        self.df = self.df.drop([self.df.columns[0], self.df.columns[1]], axis=1).values
+        self.df = self.df.drop([self.df.columns[0], self.df.columns[1], self.df.columns[2]], axis=1).values
         
         with open(pkl_path,"rb") as f:
             self.mask_n_class = pickle.load(f)

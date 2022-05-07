@@ -56,8 +56,22 @@
 ```
 ### rfr
 ```json
-
+{
+    "statusCode": 200,
+    "quality_id": 91, 
+    "grape_id": "{\"start\": 301, \"end\": 334, \"count\": 34}"
+}
 ```
 ### end
 
 
+
+<br>
+
+# TODO: Refactoring 
+- filename column in csv to slice [26:]
+- Difference of variable name between database and model
+    |Korean|DB|Model|
+    |---|---|---|
+    |가지치기|pruning|thinning|
+    |등급|maturity|grade|
