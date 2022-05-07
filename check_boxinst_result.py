@@ -7,10 +7,10 @@ def lambda_handler(event, context):
     quality_id = event["quality_id"]
     log = {}
 
-    bucket_name = 'afarm7defa4de003f406bbc7d6b4bdadbe11820155-dev'
+    bucket_name = ''
     client_s3 = boto3.client( 's3',
-        aws_access_key_id = 'AKIATT5FWZ7HYVXPO7GF',
-        aws_secret_access_key = '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',
+        aws_access_key_id = '',
+        aws_secret_access_key = '',
     )
 
     prefix = 'grape_before/'+str(quality_id)+"/"
@@ -25,7 +25,7 @@ def lambda_handler(event, context):
     url = "https://better-rat-41.hasura.app/v1/graphql"
     payload="{\"query\":\"mutation MyMutation {\\r\\n  delete_afarm_grape(where: {quality_id: {_eq: %s}}) {\\r\\n    returning {\\r\\n      grape_id\\r\\n    }\\r\\n  }\\r\\n}\\r\\n\",\"variables\":{}}"
     headers = {
-      'x-hasura-admin-secret': 'i7IqYmNWceH9bKQAtqMy5hIdujfvMQCeKjJf2JadYfFbhvXug2xatLayZB0HDFLA',
+      'x-hasura-admin-secret': '',
       'Content-Type': 'application/json'
     }
     

@@ -101,6 +101,24 @@ def lambda_handler(event, context):
     csv_name = str(quality_id)+".csv"
     client_s3.upload_file("/tmp/viz/results/"+csv_name, bucket_name, "csv/"+csv_name)
     
+    payload_objs = "{\"query\":\"mutation MyMutation3 {\\n  insert_afarm_grape(objects: [\\n  %s ],\\n    \\ton_conflict: {constraint: quality_info_pkey, update_columns: [maturity, pruning]}) {\\n    returning {\\n      grape_id\\n    }\\n  }\\n}\",\"variables\":{}}"
+    objs = "\\t{grape_id: %s, quality_id: %s, pruning: %s, maturity: \\\"%s\\\"}, \\n"
+
+    grades = ["A","B","C","D"]
+    result_csv = reader(open("/tmp/viz/results/"+csv_name, "r"))
+    next(result_csv)
+    
+    payload = ""
+    for row in result_csv:
+        payload += objs % ( grape_id_dict["start"]  , quality_id , row[-1] ,  grades[int(row[-4])])
+        grape_id_dict["start"] += 1
+
+    response = request("POST", url, headers=headers, 
+                 data = payload_objs % (payload)).json()
+    logger.info(f"Response of hasura : {response}") 
+
+
+
     return event
 
 if __name__ == "__main__":
