@@ -1,5 +1,7 @@
 # Afarm Step function
 
+## Architecture
+
 
 ## Notice
 - yolo
@@ -10,6 +12,9 @@
   - If the grape's berry count is nder 3 berry, Ignore it
 - rfr
   - save all of the each grape properties by csv file. Not only "thining or not" feature
+- delete_boxinst_result
+    - just delete past result in database and s3 bucket
+    - to do not appear in user's grape_info page
 
 ## Position of Model 
 - yolo : ```./deepsort/yolov5/```
@@ -69,6 +74,8 @@
 <br>
 
 # TODO: Refactoring 
+- make new lambda function for new name "delete_boxinst_result"
+    - have to delete other model's result too.
 - filename column in csv to slice [26:]
 - Difference of variable name between database and model
     |Korean|DB|Model|
