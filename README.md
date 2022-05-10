@@ -16,10 +16,17 @@
     - just delete past result in database and s3 bucket
     - to do not appear in user's grape_info page
 
-## Position of Model 
+## Position of Specific File 
+### Model 
+- !! It can get wget. I stored in my S3 bucket. Look at each Dockerfile.
 - yolo : ```./deepsort/yolov5/```
 - boxinst : ```./training_dir/BoxInst_MS_R_50_1x_sick4/```
 - rfr : ```./grape_rfr/```
+### .env
+- yolo : ```./yolo/hello_world/```
+- boxinst : ```./boxinst/hello_world/```
+- rfr : ```./rfr/hello_world/```
+
 
 
 ## Directory to save S3
@@ -43,7 +50,7 @@
       "statusCode": 200,
       "quality_id": 91,
       "grape_id": 300,
-      "body": "{\"quality_id\": 90}"
+      "body": "{\"quality_id\": 91}"
     },
     {
       "statusCode": 200,
