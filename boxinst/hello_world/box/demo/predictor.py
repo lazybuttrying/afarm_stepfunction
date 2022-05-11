@@ -22,8 +22,23 @@ from detectron2.utils.visualizer import ColorMode, Visualizer
 from adet.utils.visualizer import TextVisualizer
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
+import os
+from boto3 import client
+from dotenv import load_dotenv
+
+load_dotenv()
+hasura_key = os.environ.get("HASURA_KEY")
+s3_access_key = os.environ.get("S3_ACCESS_KEY")
+s3_secret_key = os.environ.get("S3_SECRET_ACCESS_KEY")
+bucket_name = os.environ.get("BUCKET_NAME")
+
+client_s3 = client( 's3',
+        aws_access_key_id = s3_access_key,
+        aws_secret_access_key = s3_secret_key
+)
+
 class VisualizationDemo(object):
-    def __init__(self, cfg, instance_mode=ColorMode.IMAGE, parallel=False):
+    def __init__(self, cfg, quality_id, instance_mode=ColorMode.IMAGE, parallel=False):
         """
         Args:
             cfg (CfgNode):
@@ -38,6 +53,7 @@ class VisualizationDemo(object):
         self.cpu_device = torch.device("cpu")
         self.instance_mode = instance_mode
         self.vis_text = cfg.MODEL.ROI_HEADS.NAME == "TextHead"
+        self.quality_id = quality_id
 
         self.parallel = parallel
         if parallel:
@@ -56,8 +72,8 @@ class VisualizationDemo(object):
             predictions (dict): the output of the model.
             vis_output (VisImage): the visualized image output.
         """
-        os.makedirs(mask_path,exist_ok = True)
-        image_name = image_path.split('/')[-1]
+        # os.makedirs(mask_path,exist_ok = True)
+        image_name = image_path.split('/')[-1][26:]
         vis_output = None
 
         predictions = self.predictor(image)
@@ -75,7 +91,7 @@ class VisualizationDemo(object):
         vis_output, mask = visualizer.draw_instance_predictions(predictions=instances)
     
         # No grape berry, pass it
-        if mask == None or len(mask)<3:
+        if mask == None or len(mask)<=3:
             return False
  
         masks = [mask[i].mask for i in range(len(mask))]
@@ -84,6 +100,11 @@ class VisualizationDemo(object):
         one_mask_path =  f"{mask_path}{image_name}_masks.pkl"
         with open(one_mask_path,"wb") as f: ##############경로 맞게 바꿔야함
             pickle.dump(mask_n_class,f)
+        client_s3.upload_file(one_mask_path, bucket_name,
+            f"mask/{self.quality_id}/{image_name}_masks.pkl")
+        os.remove(one_mask_path)
+
+
         return predictions, vis_output, mask, pred_classes, one_mask_path
 
     def _frame_from_video(self, video):

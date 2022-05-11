@@ -1,4 +1,5 @@
 import json
+from shutil import rmtree
 from requests import request
 from dotenv import load_dotenv
 from subprocess import run
@@ -80,7 +81,8 @@ def lambda_handler(event, context):
     for f in os.listdir(root_path+'inference/crops/'+str(quality_id)+'/'):
         upload_file(root_path+'inference/crops/'+str(quality_id)+'/'+f, 'grape_before/'+str(quality_id)+'/'+f)
 
-
+    # rmtree('/tmp')
+    rmtree(dest_path)
     return {
         "statusCode": 200,
         "quality_id": quality_id,

@@ -1,10 +1,11 @@
 from datetime import datetime as dt
+from shutil import rmtree
 from csv import reader
 from dotenv import load_dotenv
 from requests import request
 from subprocess import Popen, run, PIPE
 import os
-from boto3 import resource
+from boto3 import resource, client
 import logging
 from json import dumps
 
@@ -31,6 +32,11 @@ headers = {
     "Content-Type":"application/json",
     "x-hasura-admin-secret": hasura_key
 }
+
+client_s3 = client( 's3',
+        aws_access_key_id = s3_access_key,
+        aws_secret_access_key = s3_secret_key
+)
 
 resource_s3 = resource( 's3', 
     aws_access_key_id=s3_access_key,
@@ -74,33 +80,46 @@ def lambda_handler(event, context):
     logger.info(f"Result: {test.stdout}")
     logger.error(f"Error: {test.stderr}",)
 
-
     # get result
-    result_csv = reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
-    
-   
-    Popen(["python3.9", "upload_csv.py", "--path", root_path+'viz/results/',
-        "--csv_name", str(quality_id)],
-        stdout=PIPE)
-    Popen(["python3.9", "upload_masks.py", "--path", mask_path,
-        "--quality_id", str(quality_id)],
-        stdout=PIPE)
+    csv_name = str(quality_id)+'.csv'
+    client_s3.upload_file(root_path+'viz/results/'+csv_name, bucket_name, "mask/"+csv_name)
+    result_csv = reader(open(root_path+'viz/results/'+csv_name))
+    # Popen(["python3.9", "upload_csv.py", "--path", root_path+'viz/results/',
+    #     "--csv_name", str(quality_id)],
+    #     stdout=PIPE)
+
     # upload result to s3 and prepare GraphQL payload
     payload_grapes = ""
     start_grape_id = grape_id+1
     for row in result_csv:
         grape_id += 1
+        # tensor([0, 0, 0])
         img = row[1].split('/')[-1]
-        pred_classes = row[2][8:-2].split(", ")  # tensor([0, 0, 0])
+        pred_classes = row[2][8:-2].split(", ")
         sick_berry = pred_classes.count("1")
         berry = len(pred_classes) - sick_berry
-        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry,img)
+        payload_grapes += objs % (quality_id, grape_id, berry, sick_berry, img)
+        client_s3.upload_file(dest_path+img, bucket_name, "public/result/"+img)
 
      # save all the data
     response = request("POST", url, headers=headers, 
                  data = payload_objs % (payload_grapes)).json()
     logger.info(f"Response of hasura : {response}") 
 
+    # run(["python3.9", "upload_masks.py", "--path", mask_path,
+    #     "--quality_id", str(quality_id)],
+    #     stdout=PIPE)
+
+    for file in os.listdir(mask_path):
+        logger.info(f"filename of mask : {file}")  
+        client_s3.upload_file(
+            mask_path+file, bucket_name, 
+            f"mask/{quality_id}/"+file
+        )    
+
+    rmtree(src_path)
+    rmtree(dest_path)
+    rmtree(mask_path)
 
     return {
         "statusCode": 200,

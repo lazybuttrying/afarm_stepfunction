@@ -2,7 +2,6 @@ import cv2
 from detectron2.utils.visualizer import GenericMask
 import pycocotools.mask as mask_util
 import pickle
-import os
 import pandas as pd
 import numpy as np
 
@@ -88,12 +87,12 @@ class Contours():
         df_result.to_csv(self.dest_path, index = False)
         #print({'image' : self.image_path , 'number of instances' : self.feat_num_instances, 'sunburn_ratio': self.sunburn_ratio , 'diameter' : self.feat_diameter, 'circularity':self.feat_circularity, 'density':self.density, "aspect ratio": self.aspect_ratio, "grade": self.grade})
         
-    def select_second(contours):
+    def select_second(self, contours):
         areas = []
         for i in range(len(contours)):
             contour_area = self.area(contours[i])
             areas.append(contour_area)
-        sort_index = numpy.argsort(areas)
+        sort_index = np.argsort(areas)
         return contours[sort_index[-2]]
 
     def mask_to_contour(self, mask):

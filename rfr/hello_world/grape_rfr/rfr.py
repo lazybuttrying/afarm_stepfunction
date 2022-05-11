@@ -1,25 +1,34 @@
-#from sklearn.datasets import load_wine
-#import math
-from tqdm import tqdm
-#from sklearn.model_selection import train_test_split
-#from sklearn import ensemble
-#from sklearn.metrics import mean_squared_error, accuracy_score
 import pandas as pd
-#from sklearn.ensemble import RandomForestRegressor
 import numpy as np
 import os
 import argparse
 import pickle
-#import matplotlib.pyplot as plot
 from feature_extraction import Contours
-#from sklearn.model_selection import GridSearchCV
 from glob import glob
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+
+from dotenv import load_dotenv
+from boto3 import resource
+
+load_dotenv()
+hasura_key = os.environ.get("HASURA_KEY")
+s3_access_key = os.environ.get("S3_ACCESS_KEY")
+s3_secret_key = os.environ.get("S3_SECRET_ACCESS_KEY")
+bucket_name = os.environ.get("BUCKET_NAME")
+
+resource_s3 = resource( 's3', 
+    aws_access_key_id=s3_access_key,
+    aws_secret_access_key=s3_secret_key
+)
+
+bucket = resource_s3.Bucket(bucket_name)
+
+
 # python rfr.py --inference --regressor-path /workspace/grape_rfr/regressor_model.pkl --csv-path /workspace/grape_rfr/sample_result.csv --image-path /workspace/regression_data/images1 --mask-path /workspace/regression_data/masks
 
-def inference(regressor_path, csv_path, dest_path, image_path, mask_path):
+def inference(regressor_path, csv_path, dest_path, image_path, mask_path, quality_id):
     """
     model_path : str
         RFR model path
@@ -38,8 +47,11 @@ def inference(regressor_path, csv_path, dest_path, image_path, mask_path):
     features = Contours("","",dest_path=dest_path)
     for i in image_path:
         mask_name = i.split('/')[-1]+'_masks.pkl'
-        features = Contours(f"{mask_path}{mask_name}", i, dest_path, csv_path)
+        save_path = f"{mask_path}{mask_name}"
+        bucket.download_file(f"mask/{quality_id}/{mask_name}", save_path)
+        features = Contours(save_path, i, dest_path, csv_path)
         features.run()
+        os.remove(save_path)
     
     df = pd.read_csv(dest_path)
     X = df.drop(["image"], axis=1).values
@@ -76,12 +88,14 @@ if __name__ == "__main__":
     parser.add_argument('--image-path', type=str, default='/workspace/regression_data/images3',
                         help='inference할 cropped된 포도 이미지 folder')
     parser.add_argument('--mask-path', type=str, default='/workspace/regression_data/masks',
-                        help='inference할 cropped된 포도 이미지 folder')
-    
+                        help='inference할 mask 파일 folder')
+    parser.add_argument('--quality-id', type=str, default='/workspace/regression_data/masks',
+                        help='quality_id')
     args = parser.parse_args()
     if args.inference:
         inference(regressor_path = args.regressor_path, 
             csv_path=args.csv_path, dest_path=args.dest_path,
-            image_path= args.image_path, mask_path=args.mask_path)
+            image_path= args.image_path, mask_path=args.mask_path,
+            quality_id=args.quality_id)
     # if args.train:
     #     train()

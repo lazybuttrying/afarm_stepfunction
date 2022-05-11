@@ -100,7 +100,7 @@ if __name__ == "__main__":
     wr = csv.writer(f)
     cfg = setup_cfg(args)
 
-    demo = VisualizationDemo(cfg)
+    demo = VisualizationDemo(cfg, args.code)
     mask_path = args.mask_path
 
     args.input = [os.path.join(args.input[0], fname) for fname in os.listdir(args.input[0])]
@@ -133,12 +133,12 @@ if __name__ == "__main__":
         out_filename = os.path.join(args.output, file_name)
         visualized_output.save(out_filename)
         #print(f"visualized output saved to {out_filename}")
-        Popen(["python3.9", "upload_image.py", 
-            "--path", out_filename, 
-            "--file_name", file_name ],
-            stdout=PIPE)
+        # Popen(["python3.9", "upload_image.py", 
+        #     "--path", out_filename, 
+        #     "--file_name", file_name ],
+        #     stdout=PIPE)
 
-        row = [file_name, out_filename, pred_classes, instance_num, mask] 
+        row = [file_name, out_filename, pred_classes, instance_num, mask]
         wr.writerow(row)
     f.close()
     logger.info(

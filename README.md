@@ -9,7 +9,7 @@
   - Therefore It just count number of images in one image
   - use "skip_frame" input variable how much image to ignore and not to track
 - boxinst
-  - If the grape's berry count is nder 3 berry, Ignore it
+  - If the grape's berry count is under 3 berry, Ignore it
 - rfr
   - save all of the each grape properties by csv file. Not only "thining or not" feature
 - delete_boxinst_result
@@ -83,7 +83,6 @@
 # TODO: Refactoring 
 - make new lambda function for new name "delete_boxinst_result"
     - have to delete other model's result too.
-- filename column in csv to slice [26:]
 - Difference of variable name between database and model
     |Korean|DB|Model|
     |---|---|---|

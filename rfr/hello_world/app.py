@@ -1,4 +1,5 @@
 import json
+from shutil import rmtree
 from datetime import datetime as dt
 from csv import reader
 from dotenv import load_dotenv
@@ -68,16 +69,16 @@ def lambda_handler(event, context):
     bucket.download_file("mask/"+str(quality_id)+".csv", csv_path)
     
     # download masks
-    run(["python3.9", "./download/download_masks.py", 
-        "--mask_path", mask_path,
-        "--quality_id", str(quality_id)],
-           stdout=PIPE)
+    # run(["python3.9", "./download/download_masks.py", 
+    #     "--mask_path", mask_path,
+    #     "--quality_id", str(quality_id)],
+    #        stdout=PIPE)
 
     # download images
     src_s3 = "grape_before/"+str(quality_id)+"/"
     result_csv = reader(open(root_path+'viz/results/'+str(quality_id)+'.csv'))
     for row in result_csv:
-        fname = row[0][26:]
+        fname = row[0]
         bucket.download_file(src_s3+fname, src_path+fname) 
 
 
@@ -86,7 +87,9 @@ def lambda_handler(event, context):
         "--csv-path", csv_path,
         "--dest-path", "/tmp/viz/results/feature_"+str(quality_id)+".csv",
         "--image-path", src_path,
-        "--mask-path", mask_path
+        "--mask-path", mask_path,
+        "--quality-id", str(quality_id),
+
     ]
        
     test = run(args, stdout=PIPE) #, capture_output=True)
@@ -117,6 +120,9 @@ def lambda_handler(event, context):
                  data = payload_objs % (payload)).json()
     logger.info(f"Response of hasura : {response}") 
 
+    rmtree(src_path)
+    rmtree(dest_path)
+    rmtree(mask_path)
 
 
     return event
