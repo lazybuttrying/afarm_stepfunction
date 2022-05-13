@@ -1,6 +1,35 @@
 # Afarm Step function
 
+
+## Install
+1. Docker : https://www.docker.com/products/docker-desktop/
+2. AWS CLI : https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html
+3. AWS SAM CLI : https://docs.aws.amazon.com/ko_kr/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html
+4. AWS Toolkit for VS Code (for Deploy) : https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/setup-toolkit.html
+
+## Run in Local
+### Local Test
+move to "hello_world" folder of each model
+```bash
+# Build
+docker build -t {model_name} .
+
+# Run
+docker run --name {model_name} -it {model_name}
+```
+### Lambda Test on Local
+move to location of template.yml of each model
+```bash
+# build
+sam build
+
+# test
+sam local envoke -e events/qevents.json
+```
+
+
 ## Architecture
+<img width="477" alt="state_machine" src="https://user-images.githubusercontent.com/79500842/168296457-90fd322d-8a3d-4cf3-a7a7-3adda51e9398.png">
 
 
 ## Notice
@@ -9,7 +38,9 @@
   - Therefore It just count number of images in one image
   - use "skip_frame" input variable how much image to ignore and not to track
 - boxinst
-  - If the grape's berry count is under 3 berry, Ignore it
+  - If the grape's berry count is under 3 berries, Ignore it
+  - AWS Lambda failed when input was too much high resolution image
+    - (Especially when size of one mask file is over 500MB) 
 - rfr
   - save all of the each grape properties by csv file. Not only "thining or not" feature
 - delete_boxinst_result
@@ -18,7 +49,7 @@
 
 ## Position of Specific File 
 ### Model 
-- !! It can get wget. I stored in my S3 bucket. Look at each Dockerfile.
+- Every model files can get by wget. I stored in my public S3 bucket. Look at each Dockerfile.
 - yolo : ```./deepsort/yolov5/```
 - boxinst : ```./training_dir/BoxInst_MS_R_50_1x_sick4/```
 - rfr : ```./grape_rfr/```
@@ -28,8 +59,21 @@
 - rfr : ```./rfr/hello_world/```
 
 
+## S3 bucket
+### Directory
+```
+.
+├── csv
+├── grape_before
+│   └── {quality_id}
+├── mask
+│   └── {quality_id}
+└── public
+    ├── drone
+    └── result
+```
 
-## Directory to save S3
+### Save path of each step
 () filetype, [] model
 - grapes video (mp4) [start] -> ```grape_before/```
 - each grape image (png) [yolo] ->  ```grape_before/${quality_id}/```
