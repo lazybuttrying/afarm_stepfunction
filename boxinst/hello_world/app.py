@@ -135,3 +135,11 @@ def lambda_handler(event, context):
 if __name__ == "__main__":
     x = lambda_handler([{"quality_id":90, "grape_id":1500}],1)
     print(x)
+
+
+    payload = """{\n\n   \"input\": \"{\\\"quality_id\\\":%s}\",\n   
+        \"stateMachineArn\": \"arn:aws:states:ap-northeast-2:248918757327:stateMachine:AfarmProdSeoul\"\n}\n"""
+    response = requests.request("POST",
+            "https://neizhl61lb.execute-api.ap-northeast-2.amazonaws.com/alpha",
+            headers={'Content-Type': 'text/plain'},
+            data=payload%(str(quality_id)))
