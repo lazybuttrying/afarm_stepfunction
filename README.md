@@ -31,6 +31,8 @@ sam local envoke -e events/qevents.json
 ## Architecture
 <img width="477" alt="state_machine" src="https://user-images.githubusercontent.com/79500842/168296457-90fd322d-8a3d-4cf3-a7a7-3adda51e9398.png">
 
+![Architecture](https://user-images.githubusercontent.com/79500842/169014560-bce64f7d-446a-4bb3-ad6e-33f33b2be650.png)
+
 
 ## Notice
 - yolo
